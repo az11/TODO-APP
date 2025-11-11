@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Icon Generator - Todo App</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f7;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1d1d1f;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #86868b;
+            margin-bottom: 30px;
+        }
+        .upload-area {
+            border: 2px dashed #d2d2d7;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background: #f5f5f7;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .upload-area:hover {
+            border-color: #0071e3;
+            background: #e8f4fd;
+        }
+        .upload-area.dragover {
+            border-color: #0071e3;
+            background: #e8f4fd;
+        }
+        #fileInput {
+            display: none;
+        }
+        button {
+            background: #0071e3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #0077ed;
+        }
+        button:disabled {
+            background: #d2d2d7;
+            cursor: not-allowed;
+        }
+        #preview {
+            margin-top: 30px;
+        }
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .icon-item {
+            text-align: center;
+        }
+        .icon-item canvas {
+            width: 80px;
+            height: 80px;
+            border-radius: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .icon-item span {
+            display: block;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #86868b;
+        }
+        .progress {
+            margin-top: 20px;
+            display: none;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #d2d2d7;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #0071e3;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .default-icon-area {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f5f5f7;
+            border-radius: 8px;
+        }
+        .default-icon-area h3 {
+            margin-top: 0;
+            color: #1d1d1f;
+        }
+        #defaultIcon {
+            width: 200px;
+            height: 200px;
+            border-radius: 44px;
+            margin: 20px auto;
+            display: block;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 Icon Generator</h1>
+        <p class="subtitle">Generirajte vse potrebne ikone za iOS PWA aplikacijo</p>
+        
+        <div class="default-icon-area">
+            <h3>Možnost 1: Uporabi privzeto ikono</h3>
+            <p style="color: #86868b; margin-bottom: 15px;">Če nimate lastne ikone, lahko uporabite našo privzeto TODO ikono:</p>
+            <canvas id="defaultIcon" width="200" height="200"></canvas>
+            <button onclick="useDefaultIcon()">Uporabi privzeto ikono ✅</button>
+        </div>
+        
+        <div>
+            <h3>Možnost 2: Naloži svojo ikono</h3>
+            <div class="upload-area" id="uploadArea">
+                <div style="font-size: 48px; margin-bottom: 10px;">📁</div>
+                <p style="margin: 10px 0; color: #1d1d1f;">Kliknite ali povlecite sliko sem</p>
+                <p style="color: #86868b; font-size: 14px;">Priporočena velikost: 1024x1024 px (PNG ali JPG)</p>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+        </div>
+        
+        <button id="generateBtn" onclick="generateIcons()" disabled>Generiraj vse ikone</button>
+        
+        <div class="progress" id="progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+        
+        <div id="preview"></div>
+    </div>
+
+    <script>
+        let sourceImage = null;
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const generateBtn = document.getElementById('generateBtn');
+        
+        // Required icon sizes for iOS
+        const iconSizes = [16, 32, 72, 96, 120, 128, 144, 152, 167, 180, 192, 256, 512];
+        
+        // Create default icon
+        function createDefaultIcon() {
+            const canvas = document.getElementById('defaultIcon');
+            const ctx = canvas.getContext('2d');
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, 200, 200);
+            gradient.addColorStop(0, '#3B82F6');
+            gradient.addColorStop(1, '#1D4ED8');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 200, 200);
+            
+            // Checkmark
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 12;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            ctx.beginPath();
+            ctx.moveTo(50, 100);
+            ctx.lineTo(85, 135);
+            ctx.lineTo(150, 65);
+            ctx.stroke();
+            
+            // Small circles for decoration
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.beginPath();
+            ctx.arc(160, 160, 15, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(40, 40, 20, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        createDefaultIcon();
+        
+        // Use default icon
+        function useDefaultIcon() {
+            const canvas = document.getElementById('defaultIcon');
+            canvas.toBlob((blob) => {
+                const file = new File([blob], 'default-icon.png', { type: 'image/png' });
+                loadImage(file);
+            });
+        }
+        
+        // Upload area interactions
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                loadImage(file);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                loadImage(file);
+            }
+        });
+        
+        // Load image
+        function loadImage(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    sourceImage = img;
+                    generateBtn.disabled = false;
+                    uploadArea.innerHTML = `
+                        <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
+                        <p style="margin: 10px 0; color: #34c759;">Slika naložena!</p>
+                        <p style="color: #86868b; font-size: 14px;">${file.name}</p>
+                    `;
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // Generate all icons
+        function generateIcons() {
+            if (!sourceImage) return;
+            
+            const preview = document.getElementById('preview');
+            const progress = document.getElementById('progress');
+            const progressFill = document.getElementById('progressFill');
+            
+            preview.innerHTML = '<h3>Generirane ikone:</h3><div class="icon-grid" id="iconGrid"></div>';
+            progress.style.display = 'block';
+            
+            const iconGrid = document.getElementById('iconGrid');
+            let completed = 0;
+            
+            iconSizes.forEach((size, index) => {
+                setTimeout(() => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = size;
+                    canvas.height = size;
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Enable smoothing for better quality
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    
+                    // Draw image
+                    ctx.drawImage(sourceImage, 0, 0, size, size);
+                    
+                    // Create download link
+                    canvas.toBlob((blob) => {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `icon-${size}.png`;
+                        a.textContent = `Download ${size}x${size}`;
+                        
+                        const iconItem = document.createElement('div');
+                        iconItem.className = 'icon-item';
+                        iconItem.innerHTML = `
+                            <canvas width="${size}" height="${size}"></canvas>
+                            <span>${size}x${size}</span>
+                        `;
+                        
+                        const displayCanvas = iconItem.querySelector('canvas');
+                        const displayCtx = displayCanvas.getContext('2d');
+                        displayCtx.drawImage(canvas, 0, 0);
+                        
+                        displayCanvas.onclick = () => a.click();
+                        displayCanvas.style.cursor = 'pointer';
+                        
+                        iconGrid.appendChild(iconItem);
+                        
+                        completed++;
+                        progressFill.style.width = `${(completed / iconSizes.length) * 100}%`;
+                        
+                        if (completed === iconSizes.length) {
+                            setTimeout(() => {
+                                progress.innerHTML = '<p style="color: #34c759; text-align: center; margin-top: 20px;">✅ Vse ikone generirane! Kliknite na ikono za prenos.</p>';
+                            }, 300);
+                        }
+                    });
+                }, index * 100);
+            });
+        }
+    </script>
+</body>
+</html>

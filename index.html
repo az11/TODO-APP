@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- PWA Primary Meta Tags -->
+    <title>Todo App - Moje naloge</title>
+    <meta name="title" content="Todo App - Moje naloge">
+    <meta name="description" content="Profesionalna TODO aplikacija za iOS - organiziraj svoje naloge in klice">
+    
+    <!-- iOS Specific Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Todo App">
+    <meta name="theme-color" content="#3B82F6">
+    <meta name="format-detection" content="telephone=no">
+    
+    <!-- iOS Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="./icon-167.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="./icon-152.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="./icon-120.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="./icon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./icon-16.png">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json">
+    
+    <!-- Splash Screens for iOS -->
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="./splash-430x932.png">
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="./splash-393x852.png">
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="./splash-390x844.png">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel Standalone for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        /* iOS Specific Styles */
+        * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+        
+        body {
+            overscroll-behavior: none;
+            -webkit-user-select: none;
+            user-select: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        
+        input, textarea, select {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+        
+        /* Prevent zoom on input focus */
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        input[type="time"],
+        textarea,
+        select {
+            font-size: 16px !important;
+        }
+        
+        /* iOS Safe Area */
+        .safe-top {
+            padding-top: env(safe-area-inset-top);
+        }
+        
+        .safe-bottom {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        .safe-left {
+            padding-left: env(safe-area-inset-left);
+        }
+        
+        .safe-right {
+            padding-right: env(safe-area-inset-right);
+        }
+        
+        /* Smooth scrolling */
+        * {
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Hide scrollbar but keep functionality */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3B82F6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Prevent overscroll */
+        html, body {
+            overflow: hidden;
+            height: 100%;
+            width: 100%;
+            position: fixed;
+        }
+        
+        #root {
+            height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(to bottom right, #dbeafe, #e0e7ff);">
+            <div style="text-align: center;">
+                <div class="loading"></div>
+                <p style="margin-top: 20px; color: #3B82F6; font-weight: 600;">Nalagam aplikacijo...</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Lucide Icons as inline SVG sprite -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Main App Script -->
+    <script type="text/babel" src="./todo-app.jsx"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registered successfully:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+        }
+        
+        // Request notification permission on load
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission().then(permission => {
+                console.log('Notification permission:', permission);
+            });
+        }
+        
+        // Prevent zoom on double tap
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (event) => {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+        
+        // Prevent context menu
+        document.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+        });
+    </script>
+</body>
+</html>

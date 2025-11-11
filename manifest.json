@@ -1,0 +1,127 @@
+{
+  "name": "Todo App - Moje naloge",
+  "short_name": "Todo",
+  "description": "Profesionalna TODO aplikacija za organizacijo nalog in klicev",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#3B82F6",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait",
+  "scope": "./",
+  "lang": "sl",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "./icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-120.png",
+      "sizes": "120x120",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-167.png",
+      "sizes": "167x167",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-256.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": [
+    "productivity",
+    "utilities",
+    "lifestyle"
+  ],
+  "screenshots": [
+    {
+      "src": "./screenshot1.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "label": "Today view with top 3 tasks"
+    },
+    {
+      "src": "./screenshot2.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "label": "Week view with all tasks"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dodaj nalogo",
+      "short_name": "Dodaj",
+      "description": "Hitro dodajanje nove naloge",
+      "url": "./index.html?action=add",
+      "icons": [
+        {
+          "src": "./icon-96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Danes",
+      "short_name": "Danes",
+      "description": "Poglej današnje naloge",
+      "url": "./index.html?tab=today",
+      "icons": [
+        {
+          "src": "./icon-96.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false
+}

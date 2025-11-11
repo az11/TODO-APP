@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Checker - Todo App</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f7;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1d1d1f;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #86868b;
+            margin-bottom: 30px;
+        }
+        .check-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background: #f5f5f7;
+        }
+        .check-item.success {
+            background: #d1f4e0;
+            border-left: 4px solid #34c759;
+        }
+        .check-item.error {
+            background: #ffe5e5;
+            border-left: 4px solid #ff3b30;
+        }
+        .check-item.warning {
+            background: #fff4e5;
+            border-left: 4px solid #ff9500;
+        }
+        .check-item.pending {
+            background: #f5f5f7;
+            border-left: 4px solid #d2d2d7;
+        }
+        .icon {
+            font-size: 24px;
+            margin-right: 15px;
+            min-width: 30px;
+            text-align: center;
+        }
+        .details {
+            flex: 1;
+        }
+        .details h3 {
+            margin: 0 0 5px 0;
+            color: #1d1d1f;
+            font-size: 16px;
+        }
+        .details p {
+            margin: 0;
+            color: #86868b;
+            font-size: 14px;
+        }
+        button {
+            background: #0071e3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #0077ed;
+        }
+        .summary {
+            padding: 20px;
+            background: #f5f5f7;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .summary h2 {
+            margin-top: 0;
+            color: #1d1d1f;
+        }
+        .progress-ring {
+            width: 120px;
+            height: 120px;
+            margin: 20px auto;
+        }
+        .progress-text {
+            text-align: center;
+            font-size: 32px;
+            font-weight: bold;
+            color: #0071e3;
+        }
+        .action-buttons {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #d2d2d7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Setup Checker</h1>
+        <p class="subtitle">Preverite, ali so vse datoteke prisotne in pravilno konfigurirane</p>
+        
+        <button onclick="runChecks()">▶️ Začni preverjanje</button>
+        <button onclick="location.reload()">🔄 Ponastavi</button>
+        
+        <div class="summary" id="summary" style="display: none;">
+            <h2>Skupni rezultat</h2>
+            <div class="progress-text" id="progressText">0%</div>
+            <p id="summaryText" style="text-align: center; color: #86868b;"></p>
+        </div>
+        
+        <div id="results"></div>
+        
+        <div class="action-buttons" id="actions" style="display: none;">
+            <h3>Naslednji koraki:</h3>
+            <div id="nextSteps"></div>
+        </div>
+    </div>
+
+    <script>
+        const requiredFiles = [
+            { name: 'index.html', description: 'Glavna HTML datoteka', critical: true },
+            { name: 'todo-app.jsx', description: 'React aplikacija', critical: true },
+            { name: 'manifest.json', description: 'PWA manifest', critical: true },
+            { name: 'service-worker.js', description: 'Service Worker za offline', critical: true },
+            { name: 'icon-16.png', description: 'Ikona 16x16', critical: false },
+            { name: 'icon-32.png', description: 'Ikona 32x32', critical: false },
+            { name: 'icon-72.png', description: 'Ikona 72x72', critical: false },
+            { name: 'icon-96.png', description: 'Ikona 96x96', critical: false },
+            { name: 'icon-120.png', description: 'Ikona 120x120', critical: true },
+            { name: 'icon-128.png', description: 'Ikona 128x128', critical: false },
+            { name: 'icon-144.png', description: 'Ikona 144x144', critical: false },
+            { name: 'icon-152.png', description: 'Ikona 152x152', critical: true },
+            { name: 'icon-167.png', description: 'Ikona 167x167', critical: false },
+            { name: 'icon-180.png', description: 'Ikona 180x180', critical: true },
+            { name: 'icon-192.png', description: 'Ikona 192x192', critical: false },
+            { name: 'icon-256.png', description: 'Ikona 256x256', critical: false },
+            { name: 'icon-512.png', description: 'Ikona 512x512', critical: true }
+        ];
+
+        let results = [];
+        let totalChecks = requiredFiles.length + 3; // files + 3 additional checks
+        let passedChecks = 0;
+
+        async function runChecks() {
+            results = [];
+            passedChecks = 0;
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('summary').style.display = 'block';
+            
+            // Check files
+            for (const file of requiredFiles) {
+                await checkFile(file);
+            }
+            
+            // Additional checks
+            await checkHTTPS();
+            await checkManifest();
+            await checkServiceWorker();
+            
+            // Show summary
+            updateSummary();
+            showNextSteps();
+        }
+
+        async function checkFile(file) {
+            try {
+                const response = await fetch(file.name, { method: 'HEAD' });
+                if (response.ok) {
+                    addResult('success', file.name, file.description, 'Datoteka najdena ✅');
+                    passedChecks++;
+                } else {
+                    addResult(
+                        file.critical ? 'error' : 'warning',
+                        file.name,
+                        file.description,
+                        file.critical ? 'KRITIČNA datoteka manjka!' : 'Datoteka manjka (optional)'
+                    );
+                }
+            } catch (error) {
+                addResult(
+                    file.critical ? 'error' : 'warning',
+                    file.name,
+                    file.description,
+                    'Napaka pri preverjanju'
+                );
+            }
+            updateProgress();
+        }
+
+        async function checkHTTPS() {
+            const isHTTPS = window.location.protocol === 'https:';
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            
+            if (isHTTPS || isLocalhost) {
+                addResult('success', 'HTTPS Protocol', 'Varna povezava', 'HTTPS je aktiven ali local development ✅');
+                passedChecks++;
+            } else {
+                addResult('error', 'HTTPS Protocol', 'Varna povezava', 'HTTPS je OBVEZEN za PWA! Mora biti https://, ne http://');
+            }
+            updateProgress();
+        }
+
+        async function checkManifest() {
+            try {
+                const response = await fetch('manifest.json');
+                const manifest = await response.json();
+                
+                if (manifest.name && manifest.icons && manifest.start_url) {
+                    addResult('success', 'Manifest Configuration', 'PWA konfiguracija', 'Manifest je pravilno konfiguriran ✅');
+                    passedChecks++;
+                } else {
+                    addResult('warning', 'Manifest Configuration', 'PWA konfiguracija', 'Manifest obstaja, ampak manjkajo nekateri podatki');
+                }
+            } catch (error) {
+                addResult('error', 'Manifest Configuration', 'PWA konfiguracija', 'Napaka pri branju manifest.json');
+            }
+            updateProgress();
+        }
+
+        async function checkServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    if (registration) {
+                        addResult('success', 'Service Worker', 'Offline podpora', 'Service Worker je registriran ✅');
+                        passedChecks++;
+                    } else {
+                        addResult('warning', 'Service Worker', 'Offline podpora', 'Service Worker še ni registriran (normalno ob prvem zagonu)');
+                    }
+                } catch (error) {
+                    addResult('warning', 'Service Worker', 'Offline podpora', 'Service Worker API ni na voljo');
+                }
+            } else {
+                addResult('error', 'Service Worker', 'Offline podpora', 'Brskalnik ne podpira Service Workers');
+            }
+            updateProgress();
+        }
+
+        function addResult(type, title, subtitle, message) {
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                pending: '⏳'
+            };
+            
+            const result = {
+                type,
+                title,
+                subtitle,
+                message
+            };
+            results.push(result);
+            
+            const resultsDiv = document.getElementById('results');
+            const item = document.createElement('div');
+            item.className = `check-item ${type}`;
+            item.innerHTML = `
+                <div class="icon">${icons[type]}</div>
+                <div class="details">
+                    <h3>${title}</h3>
+                    <p>${subtitle} - ${message}</p>
+                </div>
+            `;
+            resultsDiv.appendChild(item);
+        }
+
+        function updateProgress() {
+            const percentage = Math.round((passedChecks / totalChecks) * 100);
+            document.getElementById('progressText').textContent = `${percentage}%`;
+        }
+
+        function updateSummary() {
+            const percentage = Math.round((passedChecks / totalChecks) * 100);
+            const summaryText = document.getElementById('summaryText');
+            
+            if (percentage === 100) {
+                summaryText.textContent = '🎉 Odlično! Vse je pripravljeno za namestitev.';
+                summaryText.style.color = '#34c759';
+            } else if (percentage >= 80) {
+                summaryText.textContent = '👍 Dobro! Večina stvari je na mestu. Preveri opozorila.';
+                summaryText.style.color = '#ff9500';
+            } else if (percentage >= 50) {
+                summaryText.textContent = '⚠️ Potrebujete več dela. Manjkajo kritične datoteke.';
+                summaryText.style.color = '#ff9500';
+            } else {
+                summaryText.textContent = '❌ Veliko stvari manjka. Začnite z osnovno postavitvijo.';
+                summaryText.style.color = '#ff3b30';
+            }
+        }
+
+        function showNextSteps() {
+            const actionsDiv = document.getElementById('actions');
+            const nextStepsDiv = document.getElementById('nextSteps');
+            actionsDiv.style.display = 'block';
+            
+            const errors = results.filter(r => r.type === 'error');
+            const warnings = results.filter(r => r.type === 'warning');
+            
+            let steps = '';
+            
+            if (errors.length > 0) {
+                steps += '<div class="check-item error"><div class="icon">🚨</div><div class="details">';
+                steps += '<h3>KRITIČNO: Odpravite napake</h3>';
+                steps += '<p>Manjkajo kritične datoteke. Brez njih aplikacija ne bo delovala.</p>';
+                steps += '<ul>';
+                errors.forEach(e => {
+                    steps += `<li>${e.title}</li>`;
+                });
+                steps += '</ul>';
+                steps += '</div></div>';
+            }
+            
+            if (warnings.length > 0) {
+                steps += '<div class="check-item warning"><div class="icon">⚠️</div><div class="details">';
+                steps += '<h3>Priporočeno: Odpravite opozorila</h3>';
+                steps += '<p>Te datoteke niso kritične, ampak izboljšajo uporabniško izkušnjo.</p>';
+                steps += '</div></div>';
+            }
+            
+            if (errors.length === 0) {
+                steps += '<div class="check-item success"><div class="icon">🚀</div><div class="details">';
+                steps += '<h3>Naslednji korak: Postavi online</h3>';
+                steps += '<p>1. Postavi vse datoteke na GitHub Pages / Netlify / Vercel<br>';
+                steps += '2. Pojdi na https://vaš-url v Safari na iPhonu<br>';
+                steps += '3. Share → Add to Home Screen<br>';
+                steps += '4. Uživaj! 🎉</p>';
+                steps += '</div></div>';
+            }
+            
+            nextStepsDiv.innerHTML = steps;
+        }
+    </script>
+</body>
+</html>
